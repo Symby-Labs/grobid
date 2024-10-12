@@ -1,16 +1,19 @@
 package org.grobid.service;
 
-import com.codahale.metrics.annotation.Timed;
-import com.google.inject.Inject;
-import com.google.inject.Singleton;
+import java.io.File;
+import java.io.InputStream;
+import java.net.URL;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.NoSuchElementException;
+
 import org.glassfish.jersey.media.multipart.FormDataBodyPart;
 import org.glassfish.jersey.media.multipart.FormDataParam;
+import org.grobid.core.engines.Engine;
 import org.grobid.core.engines.config.GrobidAnalysisConfig;
 import org.grobid.core.factory.AbstractEngineFactory;
-import org.grobid.core.utilities.GrobidProperties;
-import org.grobid.core.engines.Engine;
 import org.grobid.core.factory.GrobidPoolingFactory;
-
+import org.grobid.core.utilities.GrobidProperties;
 import org.grobid.service.process.GrobidRestProcessFiles;
 import org.grobid.service.process.GrobidRestProcessGeneric;
 import org.grobid.service.process.GrobidRestProcessString;
@@ -22,13 +25,23 @@ import org.grobid.service.util.ZipUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import jakarta.ws.rs.*;
-import jakarta.ws.rs.core.*;
-import java.io.File;
-import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.NoSuchElementException;
+import com.codahale.metrics.annotation.Timed;
+import com.google.inject.Inject;
+import com.google.inject.Singleton;
+
+import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.DefaultValue;
+import jakarta.ws.rs.FormParam;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.POST;
+import jakarta.ws.rs.PUT;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.QueryParam;
+import jakarta.ws.rs.core.Context;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.core.UriInfo;
 
 /**
  * RESTful service for the GROBID system.
@@ -50,6 +63,7 @@ public class GrobidRestService implements GrobidPaths {
     private static final String XML = "xml";
     public static final String INPUT = "input";
     public static final String CONSOLIDATE_CITATIONS = "consolidateCitations";
+    public static final String UPLOAD_FILE_URL = "uploadFileURL";
     public static final String CONSOLIDATE_HEADER = "consolidateHeader";
     public static final String CONSOLIDATE_FUNDERS = "consolidateFunders";
     public static final String INCLUDE_RAW_AFFILIATIONS = "includeRawAffiliations";
@@ -213,6 +227,7 @@ public class GrobidRestService implements GrobidPaths {
     @POST
     public Response processFulltextDocument_post(
         @FormDataParam(INPUT) InputStream inputStream,
+        @DefaultValue("") @FormDataParam("uploadFileURL") String uploadFileURL,
         @DefaultValue("0") @FormDataParam(CONSOLIDATE_HEADER) String consolidateHeader,
         @DefaultValue("0") @FormDataParam(CONSOLIDATE_CITATIONS) String consolidateCitations,
         @DefaultValue("0") @FormDataParam(CONSOLIDATE_FUNDERS) String consolidateFunders,
@@ -224,11 +239,20 @@ public class GrobidRestService implements GrobidPaths {
         @FormDataParam("generateIDs") String generateIDs,
         @FormDataParam("segmentSentences") String segmentSentences,
         @FormDataParam("teiCoordinates") List<FormDataBodyPart> coordinates) throws Exception {
-        return processFulltext(
-            inputStream, consolidateHeader, consolidateCitations, consolidateFunders,
-            includeRawAffiliations, includeRawCitations, includeRawCopyrights,
-            startPage, endPage, generateIDs, segmentSentences, coordinates
-        );
+        if(uploadFileURL.trim().length() > 0){
+            InputStream realInputStream = new URL(uploadFileURL).openStream();
+            return processFulltext(
+                realInputStream, consolidateHeader, consolidateCitations, consolidateFunders,
+                includeRawAffiliations, includeRawCitations, includeRawCopyrights,
+                startPage, endPage, generateIDs, segmentSentences, coordinates
+            );
+        } else {
+            return processFulltext(
+                inputStream, consolidateHeader, consolidateCitations, consolidateFunders,
+                includeRawAffiliations, includeRawCitations, includeRawCopyrights,
+                startPage, endPage, generateIDs, segmentSentences, coordinates
+            );
+        }
     }
 
     @Path(PATH_FULL_TEXT)
@@ -274,7 +298,6 @@ public class GrobidRestService implements GrobidPaths {
         boolean includeRaw = validateIncludeRawParam(includeRawCitations);
         boolean generate = validateGenerateIdParam(generateIDs);
         boolean segment = validateGenerateIdParam(segmentSentences);
-        
         List<String> teiCoordinates = collectCoordinates(coordinates);
 
         return restProcessFiles.processFulltextDocument(

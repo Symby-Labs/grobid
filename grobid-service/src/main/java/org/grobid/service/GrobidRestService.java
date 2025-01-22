@@ -191,10 +191,11 @@ public class GrobidRestService implements GrobidPaths {
         @DefaultValue("0") @FormDataParam(INCLUDE_RAW_COPYRIGHTS) String includeRawCopyrights) throws Exception {
 
         if(uploadFileURL.trim().length() > 0){
-            inputStream = new URL(uploadFileURL).openStream();
-        }  
-
-        return processHeaderDocumentReturnXml_post(inputStream, consolidate, includeRawAffiliations, includeRawCopyrights);
+            InputStream realInputStream = new URL(uploadFileURL).openStream();
+            return processHeaderDocumentReturnXml_post(realInputStream, consolidate, includeRawAffiliations, includeRawCopyrights);
+        } else {
+            return processHeaderDocumentReturnXml_post(inputStream, consolidate, includeRawAffiliations, includeRawCopyrights);
+        }
     }
 
     @Path(PATH_HEADER)

@@ -199,8 +199,8 @@ public class GrobidRestService implements GrobidPaths {
         @FormDataParam(INPUT) InputStream inputStream,
         @DefaultValue("0") @FormDataParam(CONSOLIDATE_HEADER) String consolidate,
         @DefaultValue("0") @FormDataParam(INCLUDE_RAW_AFFILIATIONS) String includeRawAffiliations,
-        @DefaultValue("0") @FormDataParam(INCLUDE_RAW_COPYRIGHTS) String includeRawCopyrights) {
-        return processHeaderDocumentReturnXml_post(inputStream, consolidate, includeRawAffiliations, includeRawCopyrights);
+        @DefaultValue("0") @FormDataParam(INCLUDE_RAW_COPYRIGHTS) String includeRawCopyrights) throws Exception {
+        return processHeaderDocumentReturnXml_post(inputStream, "", consolidate, includeRawAffiliations, includeRawCopyrights);
     }
 
     @Path(PATH_HEADER)

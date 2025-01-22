@@ -148,16 +148,28 @@ public class GrobidRestService implements GrobidPaths {
     @POST
     public Response processHeaderDocumentReturnXml_post(
         @FormDataParam(INPUT) InputStream inputStream,
+        @DefaultValue("") @FormDataParam("uploadFileURL") String uploadFileURL,
         @DefaultValue("0") @FormDataParam(CONSOLIDATE_HEADER) String consolidate,
         @DefaultValue("0") @FormDataParam(INCLUDE_RAW_AFFILIATIONS) String includeRawAffiliations,
-        @DefaultValue("0") @FormDataParam(INCLUDE_RAW_COPYRIGHTS) String includeRawCopyrights) {
+        @DefaultValue("0") @FormDataParam(INCLUDE_RAW_COPYRIGHTS) String includeRawCopyrights) throws Exception {
         int consol = validateConsolidationParam(consolidate);
-        return restProcessFiles.processStatelessHeaderDocument(
-            inputStream, consol,
-            validateIncludeRawParam(includeRawAffiliations),
-            validateIncludeRawParam(includeRawCopyrights),
-            ExpectedResponseType.XML
-        );
+
+        if(uploadFileURL.trim().length() > 0){
+            InputStream realInputStream = new URL(uploadFileURL).openStream();
+            return restProcessFiles.processStatelessHeaderDocument(
+                realInputStream, consol,
+                validateIncludeRawParam(includeRawAffiliations),
+                validateIncludeRawParam(includeRawCopyrights),
+                ExpectedResponseType.XML
+            );
+        } else {
+            return restProcessFiles.processStatelessHeaderDocument(
+                inputStream, consol,
+                validateIncludeRawParam(includeRawAffiliations),
+                validateIncludeRawParam(includeRawCopyrights),
+                ExpectedResponseType.XML
+            );
+        }
     }
 
     @Path(PATH_HEADER_FUNDING)
@@ -185,17 +197,10 @@ public class GrobidRestService implements GrobidPaths {
     @PUT
     public Response processStatelessHeaderDocumentReturnXml(
         @FormDataParam(INPUT) InputStream inputStream,
-        @DefaultValue("") @FormDataParam("uploadFileURL") String uploadFileURL,
         @DefaultValue("0") @FormDataParam(CONSOLIDATE_HEADER) String consolidate,
         @DefaultValue("0") @FormDataParam(INCLUDE_RAW_AFFILIATIONS) String includeRawAffiliations,
-        @DefaultValue("0") @FormDataParam(INCLUDE_RAW_COPYRIGHTS) String includeRawCopyrights) throws Exception {
-
-        if(uploadFileURL.trim().length() > 0){
-            InputStream realInputStream = new URL(uploadFileURL).openStream();
-            return processHeaderDocumentReturnXml_post(realInputStream, consolidate, includeRawAffiliations, includeRawCopyrights);
-        } else {
-            return processHeaderDocumentReturnXml_post(inputStream, consolidate, includeRawAffiliations, includeRawCopyrights);
-        }
+        @DefaultValue("0") @FormDataParam(INCLUDE_RAW_COPYRIGHTS) String includeRawCopyrights) {
+        return processHeaderDocumentReturnXml_post(inputStream, consolidate, includeRawAffiliations, includeRawCopyrights);
     }
 
     @Path(PATH_HEADER)

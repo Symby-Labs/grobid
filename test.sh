@@ -13,10 +13,10 @@
 #     -X POST                                \
 #     -H 'Content-Type: multipart/form-data' \
 #     -F input="@deepuda.pdf"                \
-#     localhost:8070/api/processFulltextDocument;
+#     https://grobidx-898726976150.us-central1.run.app/api/processFulltextDocument;
 
 curl                                                                                             \
     -X POST                                                                                      \
     -H 'Content-Type: multipart/form-data'                                                       \
     -F uploadFileURL=https://storage.googleapis.com/symby_test_bucket/pdf_articles/deepuda.pdf   \
-    localhost:8070/api/processFulltextDocument;
+    https://grobidx-898726976150.us-central1.run.app/api/processFulltextDocument;

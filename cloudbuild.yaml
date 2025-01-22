@@ -1,0 +1,42 @@
+steps:
+  - id: 'build-image'
+    name: 'gcr.io/cloud-builders/docker'
+    entrypoint: 'bash'
+    args: [
+      '-c',
+      'docker build -t grobid/grobid:0.8.0 --build-arg GROBID_VERSION=0.8.0 --file Dockerfile.delft .'
+    ]
+    secretEnv: []
+
+  - id: 'push-image'
+    name: 'gcr.io/cloud-builders/docker'
+    args: [
+      'push',
+      'gcr.io/fifth-tangent-405305/github.com/symby-labs/grobid:$COMMIT_SHA'
+    ]
+
+  - id: 'deploy-image'
+    name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    entrypoint: gcloud
+    args: [
+      'run',
+      'deploy',
+      'grobidx',
+      '--image',
+      'gcr.io/fifth-tangent-405305/github.com/symby-labs/grobid:$COMMIT_SHA',
+      '--region',
+      'us-central1'
+    ]
+images:
+  - gcr.io/fifth-tangent-405305/github.com/symby-labs/grobid:$COMMIT_SHA
+options:
+  logStreamingOption: STREAM_ON
+  defaultLogsBucketBehavior: REGIONAL_USER_OWNED_BUCKET
+availableSecrets:
+  secretManager:
+    - versionName: projects/fifth-tangent-405305/secrets/symbyai-github-token/versions/latest
+      env: 'GITHUB_TOKEN'
+    - versionName: projects/fifth-tangent-405305/secrets/symbyai-github-username/versions/latest
+      env: 'GITHUB_USERNAME'
+    - versionName: projects/fifth-tangent-405305/secrets/OPENAI_API_KEY/versions/latest
+      env: 'OPENAI_API_KEY'

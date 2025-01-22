@@ -185,9 +185,15 @@ public class GrobidRestService implements GrobidPaths {
     @PUT
     public Response processStatelessHeaderDocumentReturnXml(
         @FormDataParam(INPUT) InputStream inputStream,
+        @DefaultValue("") @FormDataParam("uploadFileURL") String uploadFileURL,
         @DefaultValue("0") @FormDataParam(CONSOLIDATE_HEADER) String consolidate,
         @DefaultValue("0") @FormDataParam(INCLUDE_RAW_AFFILIATIONS) String includeRawAffiliations,
-        @DefaultValue("0") @FormDataParam(INCLUDE_RAW_COPYRIGHTS) String includeRawCopyrights) {
+        @DefaultValue("0") @FormDataParam(INCLUDE_RAW_COPYRIGHTS) String includeRawCopyrights) throws Exception {
+
+        if(uploadFileURL.trim().length() > 0){
+            inputStream = new URL(uploadFileURL).openStream();
+        }  
+
         return processHeaderDocumentReturnXml_post(inputStream, consolidate, includeRawAffiliations, includeRawCopyrights);
     }
 
